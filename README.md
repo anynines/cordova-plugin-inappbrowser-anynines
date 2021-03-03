@@ -25,6 +25,81 @@ description: Open an in-app browser window.
 |:-:|:-:|
 |[![Build status](https://ci.appveyor.com/api/projects/status/github/apache/cordova-plugin-inappbrowser?branch=master)](https://ci.appveyor.com/project/ApacheSoftwareFoundation/cordova-plugin-inappbrowser)|[![Build Status](https://travis-ci.org/apache/cordova-plugin-inappbrowser.svg?branch=master)](https://travis-ci.org/apache/cordova-plugin-inappbrowser)|
 
+# anynines plugin customization
+
+This is an extended fork of the original plugin that adds some features
+- support for custom headers (e.g. auth) in the inital web location request
+- params for position and size in the InAppBrowserOptions
+- a public goBack() method that can be called from the Ionic app
+
+It is supposed to be used with the forked @ionic-native plugin [in-app-browser-anynines](https://github.com/anynines/in-app-browser-anynines.git)
+
+## Installation
+
+```
+$ npm i cordova-plugin-inappbrowser-anynines@https://github.com/anynines/cordova-plugin-inappbrowser-anynines.git
+
+$ npm install @ionic-native/in-app-browser@https://github.com/anynines/in-app-browser-anynines.git
+```
+
+## Usage
+
+See the original instructions below for all regular features and instructions.
+
+## Simple example implementation
+
+```typescript
+import React from 'react'
+import './WebView.css' 
+import { InAppBrowser, InAppBrowserObject, InAppBrowserOptions } from '@ionic-native/in-app-browser-anynines'
+
+export const WebView: React.FC = (props) => {
+
+  type InAppBrowserInstance = InAppBrowserObject | null
+
+  const [webView, setWebView] = React.useState(null as InAppBrowserInstance)
+
+  const onBackButton = () => {
+    debugger
+    console.log('back', webView)
+    if (webView) {
+      (webView as unknown as InAppBrowserObject).goBack()
+    }
+  }
+
+  React.useEffect(() => {
+
+    const url = 'https://<MyAuthenticatedWebLocation>'
+
+    const browserOptions: InAppBrowserOptions = {
+      location: 'no',
+      toolbar: 'no',
+      x: 0,
+      y: 78, // calculate what space you need for header, nav etc.
+      width: window.innerWidth,
+      height: window.innerHeight - 78
+    }
+
+    const headers = {
+      'Authorization': 'Bearer abcd123456789<MyAuthToken>'
+    }
+
+    const browser = InAppBrowser.create(url, '_blank', browserOptions, headers)
+    setWebView(browser)
+
+  }, [])
+
+  return (
+    <div className='webview'>
+      <button onClick={onBackButton}>Back</button>
+    </div>
+  )
+
+}
+```
+
+
+
 # cordova-plugin-inappbrowser
 
 You can show helpful articles, videos, and web resources inside of your app. Users can view web pages without leaving your app.
