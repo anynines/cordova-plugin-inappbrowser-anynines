@@ -27,19 +27,36 @@ description: Open an in-app browser window.
 
 # anynines plugin customization
 
-This is an extended fork of the original plugin that adds some features
+This is an extended fork of the original InAppBrowser plugin that adds the following features:
 - support for custom headers (e.g. auth) in the inital web location request
 - params for position and size in the InAppBrowserOptions
-- a public goBack() method that can be called from the Ionic app
+- a public goBack() method that can be called from the surrounding app to step back in the browser history
 
-It is supposed to be used with the forked @ionic-native plugin [in-app-browser-anynines](https://github.com/anynines/in-app-browser-anynines.git)
+It is supposed to be used in Ionic apps with the forked @ionic-native plugin [in-app-browser-anynines](https://github.com/anynines/in-app-browser-anynines.git)
+
+## Supported platforms
+
+The changes described above are implementend only for 
+- Android
+- iOS
+
 
 ## Installation
 
 ```
 $ npm i cordova-plugin-inappbrowser-anynines@https://github.com/anynines/cordova-plugin-inappbrowser-anynines.git
 
-$ npm install @ionic-native/in-app-browser@https://github.com/anynines/in-app-browser-anynines.git
+$ npm install @ionic-native/in-app-browser-anynines@https://github.com/anynines/in-app-browser-anynines.git
+```
+If you are using Capacitor and you already added the mobile platforms, run
+```
+ionic capacitor update android
+ionic capacitor update ios
+```
+after installation.
+For Cordova apps use the usual
+```
+cordova plugin add cordova-plugin-inappbrowser-anynines
 ```
 
 ## Usage
