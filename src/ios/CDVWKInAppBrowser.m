@@ -80,7 +80,7 @@ static CDVWKInAppBrowser* instance = nil;
 
 -(void)goBack:(CDVInvokedUrlCommand*)command
 {
-  [self.inAppBrowserViewController goBack]
+  [self.inAppBrowserViewController goBack];
 }
 
 - (BOOL) isSystemUrl:(NSURL*)url

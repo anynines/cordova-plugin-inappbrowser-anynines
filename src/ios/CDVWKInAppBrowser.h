@@ -74,6 +74,7 @@
 
 - (void)close;
 - (void)navigateTo:(NSURL*)url headers:(NSString *)headers;
+- (void)goBack;
 - (void)showLocationBar:(BOOL)show;
 - (void)showToolBar:(BOOL)show : (NSString *) toolbarPosition;
 - (void)setCloseButtonTitle:(NSString*)title : (NSString*) colorString : (int) buttonIndex;
