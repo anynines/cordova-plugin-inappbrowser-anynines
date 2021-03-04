@@ -65,8 +65,6 @@
       exec(null, null, 'InAppBrowser', 'loadAfterBeforeload', [strUrl]);
     },
     close: function (eventname) {
-      alert('close call')
-      console.log('close call')
       exec(null, null, 'InAppBrowser', 'close', []);
     },
     show: function (eventname) {
