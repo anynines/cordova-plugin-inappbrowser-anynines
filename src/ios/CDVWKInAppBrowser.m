@@ -1104,7 +1104,7 @@ BOOL isExiting = FALSE;
     }
 }
 
-- (void)goBack:(id)sender
+- (void)goBack
 {
     [self.webView goBack];
 }
