@@ -1109,7 +1109,7 @@ BOOL isExiting = FALSE;
     [self.webView goBack];
 }
 
-- (void)goForward:(id)sender
+- (void)goForward
 {
     [self.webView goForward];
 }
