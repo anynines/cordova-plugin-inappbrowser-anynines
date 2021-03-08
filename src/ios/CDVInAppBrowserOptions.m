@@ -25,6 +25,7 @@
 {
     if (self = [super init]) {
         // default values
+        self.ignorestatusbar = YES;
         self.location = YES;
         self.toolbar = YES;
         self.closebuttoncaption = nil;
