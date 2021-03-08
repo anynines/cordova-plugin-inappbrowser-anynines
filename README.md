@@ -63,6 +63,13 @@ cordova plugin add cordova-plugin-inappbrowser-anynines
 
 See the original instructions below for all regular features and instructions.
 
+## New Options
+- x: a number representing the horizontal coordinate of the InAppBrowser's top left corner
+- y: a number representing the vertical coordinate of the InAppBrowser's top left corner
+- width: the InAppBrowser's window width in pixels
+- height: the InAppBrowser's window height in pixels
+- ignorestatusbar: a string ( 'yes' | 'no' ) telling the plugin to ignore the statusbar's height when setting the window position. Defaults to 'yes'.
+
 ## Simple example implementation
 
 ```typescript
@@ -91,6 +98,7 @@ export const WebView: React.FC = (props) => {
     const browserOptions: InAppBrowserOptions = {
       location: 'no',
       toolbar: 'no',
+      ignorestatusbar: 'yes' // yes is the default, only here for demonstration
       x: 0,
       y: 78, // calculate what space you need for header, nav etc.
       width: window.innerWidth,

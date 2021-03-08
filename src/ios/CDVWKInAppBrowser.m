@@ -1134,7 +1134,7 @@ BOOL isExiting = FALSE;
     CGRect viewBounds = [self.webView bounds];
     CGFloat statusBarHeight = [self getStatusBarOffset];
     
-    if (!_browserOptions.ignorestatusbar) {
+    if (_browserOptions.ignorestatusbar == NO) {
         // orientation portrait or portraitUpsideDown: status bar is on the top and web view is to be aligned to the bottom of the status bar
         // orientation landscapeLeft or landscapeRight: status bar height is 0 in but lets account for it in case things ever change in the future
         viewBounds.origin.y = statusBarHeight;
