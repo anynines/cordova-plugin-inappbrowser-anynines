@@ -1092,6 +1092,15 @@ BOOL isExiting = FALSE;
             [[weakSelf parentViewController] dismissViewControllerAnimated:YES completion:nil];
         }
     });
+
+    [self.webView loadHTMLString:@"" baseURL:nil];
+    //[self.webView stopLoading];
+    //[self.webView removeFromSuperview];
+    // [self setWebView:nil];
+    
+    //[[NSURLCache sharedURLCache] removeAllCachedResponses];
+    //[[NSURLCache sharedURLCache] setDiskCapacity:0];
+    //[[NSURLCache sharedURLCache] setMemoryCapacity:0];
 }
 
 - (void)navigateTo:(NSURL*)url headers:(NSString*)headers
