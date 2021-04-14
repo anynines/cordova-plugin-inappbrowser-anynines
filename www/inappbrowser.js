@@ -73,6 +73,9 @@
     hide: function (eventname) {
       exec(null, null, 'InAppBrowser', 'hide', []);
     },
+    canGoBack: function () {
+      exec(historySuccessCallback, historyErrorCallback, 'InAppBrowser', 'canGoBack', [])
+    },
     goBack: function (eventname) {
       exec(historySuccessCallback, historyErrorCallback, 'InAppBrowser', 'goBack', [])
     },

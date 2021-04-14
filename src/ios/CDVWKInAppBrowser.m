@@ -83,6 +83,11 @@ static CDVWKInAppBrowser* instance = nil;
   [self.inAppBrowserViewController goBack];
 }
 
+- (BOOL) canGoBack
+{
+  return theWebView.canGoBack
+}
+
 - (BOOL) isSystemUrl:(NSURL*)url
 {
     if ([[url host] isEqualToString:@"itunes.apple.com"]) {
