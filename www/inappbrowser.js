@@ -38,6 +38,14 @@
     console.log('goBack error', message)
   }
 
+  function canGoBackCallback(result) {
+    return result
+  }
+
+  function canGoBackErrorCallback(message) {
+    console.log('Cannot get canGoBack: ', message)
+  }
+
   function InAppBrowser() {
     this.channels = {
       'beforeload': channel.create('beforeload'),
@@ -73,8 +81,8 @@
     hide: function (eventname) {
       exec(null, null, 'InAppBrowser', 'hide', []);
     },
-    canGoBack: function () {
-      exec(historySuccessCallback, historyErrorCallback, 'InAppBrowser', 'canGoBack', [])
+    canGoBack: function (success, error) {
+      exec(success, error, 'InAppBrowser', 'canGoBack', [])
     },
     goBack: function (eventname) {
       exec(historySuccessCallback, historyErrorCallback, 'InAppBrowser', 'goBack', [])

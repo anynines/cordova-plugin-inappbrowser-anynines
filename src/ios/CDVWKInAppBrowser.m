@@ -83,9 +83,11 @@ static CDVWKInAppBrowser* instance = nil;
   [self.inAppBrowserViewController goBack];
 }
 
-- (BOOL) canGoBack
-{
-  return theWebView.canGoBack
+- (void) canGoBack:(CDVInvokedUrlCommand*)command {
+    BOOL canGoBackState = self.inAppBrowserViewController.webView.canGoBack;
+
+    CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsBool:canGoBackState];
+    [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
 }
 
 - (BOOL) isSystemUrl:(NSURL*)url
