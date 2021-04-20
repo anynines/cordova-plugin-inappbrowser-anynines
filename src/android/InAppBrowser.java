@@ -350,6 +350,14 @@ public class InAppBrowser extends CordovaPlugin {
           inAppWebView.goBack();
         }
       }); 
+    } else if (action.equals("canGoBack")) {
+      this.cordova.getActivity().runOnUiThread(new Runnable() {
+        @Override
+        public void run() {
+          Boolean goingBack = inAppWebView.canGoBack();
+          callbackContext.sendPluginResult(new PluginResult(PluginResult.Status.OK, goingBack));
+        }
+      }); 
     } else {
       return false;
     }
