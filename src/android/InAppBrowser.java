@@ -874,10 +874,7 @@ public class InAppBrowser extends CordovaPlugin {
             : WindowManager.LayoutParams.MATCH_PARENT;
         wlp.height = features.get(HEIGHT) != null ? this.dpToPixels(Integer.parseInt(features.get(HEIGHT)))
             : WindowManager.LayoutParams.MATCH_PARENT;
-        wlp.dimAmount = 0.5f;
         window.setFlags(LayoutParams.FLAG_NOT_TOUCH_MODAL, LayoutParams.FLAG_NOT_TOUCH_MODAL);
-        window.setFlags(LayoutParams.FLAG_NOT_FOCUSABLE, LayoutParams.FLAG_NOT_FOCUSABLE);
-        window.clearFlags(WindowManager.LayoutParams.FLAG_DIM_BEHIND);
         window.setAttributes(wlp);
 
         // Main container layout
