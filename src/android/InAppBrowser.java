@@ -269,6 +269,7 @@ public class InAppBrowser extends CordovaPlugin {
         LOG.e(LOG_TAG, "unexpected loadAfterBeforeload called without feature beforeload=yes");
       }
       final String url = args.getString(0);
+      final HashMap<String, String> headers = parseHeaders(args.optString(1));
       this.cordova.getActivity().runOnUiThread(new Runnable() {
         @SuppressLint("NewApi")
         @Override
@@ -279,7 +280,7 @@ public class InAppBrowser extends CordovaPlugin {
           } else {
             ((InAppBrowserClient) inAppWebView.getWebViewClient()).waitForBeforeload = false;
           }
-          inAppWebView.loadUrl(url, null);
+          inAppWebView.loadUrl(url, headers);
         }
       });
     } else if (action.equals("injectScriptCode")) {
