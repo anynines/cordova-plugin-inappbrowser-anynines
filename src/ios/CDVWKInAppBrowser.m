@@ -388,6 +388,7 @@ static CDVWKInAppBrowser* instance = nil;
 - (void)loadAfterBeforeload:(CDVInvokedUrlCommand*)command
 {
     NSString* urlStr = [command argumentAtIndex:0];
+    NSString* headerStr = [command argumentAtIndex:1];
 
     if ([_beforeload isEqualToString:@""]) {
         NSLog(@"unexpected loadAfterBeforeload called without feature beforeload=get|post");
@@ -404,7 +405,7 @@ static CDVWKInAppBrowser* instance = nil;
     NSURL* url = [NSURL URLWithString:urlStr];
     //_beforeload = @"";
     _waitForBeforeload = NO;
-    [self.inAppBrowserViewController navigateTo:url  headers:nil];
+    [self.inAppBrowserViewController navigateTo:url  headers:headerStr];
 }
 
 // This is a helper method for the inject{Script|Style}{Code|File} API calls, which

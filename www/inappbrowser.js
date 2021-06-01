@@ -46,6 +46,30 @@
     console.log('Cannot get canGoBack: ', message)
   }
 
+  function parseRequestHeaders(requestHeaders) {
+    var strRequestHeaders = '';
+    if (requestHeaders) {
+      if (typeof requestHeaders === 'string' || requestHeaders instanceof String) {
+        strRequestHeaders = requestHeaders.replace(/@/gi, '@a');
+      } else {
+        var first = true;
+        for (var k in requestHeaders) {
+          if (requestHeaders.hasOwnProperty(k)) {
+            var key = k.replace(/@/gi, '@a').replace(/,/gi, '@c').replace(/=/gi, '@e');
+            var value = requestHeaders[k].toString().replace(/@/gi, '@a').replace(/,/gi, '@c').replace(/=/gi, '@e');
+            if (first) {
+              first = false;
+            } else {
+              strRequestHeaders += ',';
+            }
+            strRequestHeaders += key + '=' + value;
+          }
+        }
+      }
+    }
+    return strRequestHeaders
+  }
+
   function InAppBrowser() {
     this.channels = {
       'beforeload': channel.create('beforeload'),
@@ -68,9 +92,9 @@
         }
       }
     },
-    _loadAfterBeforeload: function (strUrl) {
+    loadAfterBeforeload: function (strUrl, headers) {
       strUrl = urlutil.makeAbsolute(strUrl);
-      exec(null, null, 'InAppBrowser', 'loadAfterBeforeload', [strUrl]);
+      exec(null, null, 'InAppBrowser', 'loadAfterBeforeload', [strUrl, parseRequestHeaders(headers)]);
     },
     close: function (eventname) {
       exec(null, null, 'InAppBrowser', 'close', []);
@@ -137,26 +161,7 @@
     var cb = function (eventname) {
       iab._eventHandler(eventname);
     };
-    var strWindowHeaders = '';
-    if (windowHeaders) {
-      if (typeof windowHeaders === 'string' || windowHeaders instanceof String) {
-        strWindowHeaders = windowHeaders.replace(/@/gi, '@a');
-      } else {
-        var first = true;
-        for (var k in windowHeaders) {
-          if (windowHeaders.hasOwnProperty(k)) {
-            var key = k.replace(/@/gi, '@a').replace(/,/gi, '@c').replace(/=/gi, '@e');
-            var value = windowHeaders[k].toString().replace(/@/gi, '@a').replace(/,/gi, '@c').replace(/=/gi, '@e');
-            if (first) {
-              first = false;
-            } else {
-              strWindowHeaders += ',';
-            }
-            strWindowHeaders += key + '=' + value;
-          }
-        }
-      }
-    }
+    var strWindowHeaders = parseRequestHeaders(windowHeaders)
     strWindowFeatures = strWindowFeatures || '';
 
     exec(cb, cb, 'InAppBrowser', 'open', [strUrl, strWindowName, strWindowFeatures, strWindowHeaders]);
