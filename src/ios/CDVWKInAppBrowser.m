@@ -390,8 +390,9 @@ static CDVWKInAppBrowser* instance = nil;
     NSString* urlStr = [command argumentAtIndex:0];
     NSString* headerStr = [command argumentAtIndex:1];
 
-    if ([_beforeload isEqualToString:@""]) {
-        NSLog(@"unexpected loadAfterBeforeload called without feature beforeload=get|post");
+    if ([_beforeload isEqualToString:@""] || [_beforeload isEqualToString:@"no"]) {
+        NSLog(@"WARNING: unexpected loadAfterBeforeload called without feature beforeload=get|post, 
+        \nsubsequent load operations will get blocked.");
     }
     if (self.inAppBrowserViewController == nil) {
         NSLog(@"Tried to invoke loadAfterBeforeload on IAB after it was closed.");
@@ -631,10 +632,17 @@ static CDVWKInAppBrowser* instance = nil;
     }
 }
 
+/**
+* _waitBeforeLoad is set according to the _beforeload browser option.
+* This means the "beforeload" event will be triggered on each load start
+* instead of just the first one, as in the original implamentation
+*/
 - (void)didStartProvisionalNavigation:(WKWebView*)theWebView
 {
     NSLog(@"didStartProvisionalNavigation");
-//    self.inAppBrowserViewController.currentURL = theWebView.URL;
+    if ([_beforeload isEqualToString:@"yes"] || [_beforeload isEqualToString:@"get"]) {
+        _waitForBeforeload = YES;
+    }
 }
 
 - (void)didFinishNavigation:(WKWebView*)theWebView
