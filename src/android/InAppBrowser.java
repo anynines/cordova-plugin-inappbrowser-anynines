@@ -265,21 +265,23 @@ public class InAppBrowser extends CordovaPlugin {
     } else if (action.equals("close")) {
       closeDialog();
     } else if (action.equals("loadAfterBeforeload")) {
-      if (beforeload == null) {
-        LOG.e(LOG_TAG, "unexpected loadAfterBeforeload called without feature beforeload=yes");
-      }
       final String url = args.getString(0);
       final HashMap<String, String> headers = parseHeaders(args.optString(1));
       this.cordova.getActivity().runOnUiThread(new Runnable() {
         @SuppressLint("NewApi")
         @Override
         public void run() {
-          if (android.os.Build.VERSION.SDK_INT < android.os.Build.VERSION_CODES.O) {
-            currentClient.waitForBeforeload = false;
-            inAppWebView.setWebViewClient(currentClient);
-          } else {
-            ((InAppBrowserClient) inAppWebView.getWebViewClient()).waitForBeforeload = false;
+          if (beforeload == null) {
+            LOG.e(LOG_TAG, "WARNING: unexpected loadAfterBeforeload called without feature beforeload=yes" +
+                    ", \nsubsequent load operations will be blocked.");
+            if (android.os.Build.VERSION.SDK_INT < android.os.Build.VERSION_CODES.O) {
+              currentClient.waitForBeforeload = false;
+              inAppWebView.setWebViewClient(currentClient);
+            } else {
+              ((InAppBrowserClient) inAppWebView.getWebViewClient()).waitForBeforeload = false;
+            }
           }
+
           inAppWebView.loadUrl(url, headers);
         }
       });
