@@ -391,8 +391,7 @@ static CDVWKInAppBrowser* instance = nil;
     NSString* headerStr = [command argumentAtIndex:1];
 
     if ([_beforeload isEqualToString:@""] || [_beforeload isEqualToString:@"no"]) {
-        NSLog(@"WARNING: unexpected loadAfterBeforeload called without feature beforeload=get|post, 
-        \nsubsequent load operations will get blocked.");
+        NSLog(@"WARNING: unexpected loadAfterBeforeload called without feature beforeload=get|post, \nsubsequent load operations will get blocked.");
     }
     if (self.inAppBrowserViewController == nil) {
         NSLog(@"Tried to invoke loadAfterBeforeload on IAB after it was closed.");
