@@ -53,5 +53,6 @@
 
 + (CDVInAppBrowserOptions*)parseOptions:(NSString*)options;
 + (NSMutableURLRequest*)createRequest:(NSURL*)url headers:(NSString*)headers;
++ (NSMutableURLRequest*)createPayloadRequestFromJSON:(NSString*)jsonRequestString headers:(NSString*)headers;
 
 @end

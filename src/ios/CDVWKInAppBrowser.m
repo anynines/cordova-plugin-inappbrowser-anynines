@@ -408,6 +408,16 @@ static CDVWKInAppBrowser* instance = nil;
     [self.inAppBrowserViewController navigateTo:url  headers:headerStr];
 }
 
+- (void)injectRequest:(CDVInvokedUrlCommand*)command
+{
+    NSString* JSONRequestString = [command argumentAtIndex:0];
+    NSString* headers = [command argumentAtIndex:1];
+
+    NSMutableURLRequest* request = [CDVInAppBrowserOptions createPayloadRequestFromJSON:JSONRequestString headers:headers];
+    _waitForBeforeload = NO;
+    [self.inAppBrowserViewController loadRequest:request];
+}
+
 // This is a helper method for the inject{Script|Style}{Code|File} API calls, which
 // provides a consistent method for injecting JavaScript code into the document.
 //
@@ -513,6 +523,30 @@ static CDVWKInAppBrowser* instance = nil;
     return NO;
 }
 
+- (NSString*)convertObjectToJSON:(id)object
+{
+    NSError *writeError = nil;
+
+    NSData *jsonData = [NSJSONSerialization dataWithJSONObject:object options:NSJSONWritingPrettyPrinted error:&writeError];
+
+    NSString *jsonString = [[NSString alloc] initWithData:jsonData encoding:NSUTF8StringEncoding];
+
+    return jsonString;
+}
+
+- (NSDictionary*)convertRequestToDictionary:(NSURLRequest*)request
+{
+    NSString* url = [[request URL] absoluteString];
+
+    NSDictionary* container = @{
+        @"URL": url,
+        @"HTTPMethod": [request HTTPMethod],
+        @"HTTPBody": ([request HTTPBody] != nil ? [[NSString alloc] initWithData:[request HTTPBody] encoding:NSUTF8StringEncoding] : @"")
+    };
+
+  return container;
+}
+
 /**
  * The message handler bridge provided for the InAppBrowser is capable of executing any oustanding callback belonging
  * to the InAppBrowser plugin. Care has been taken that other callbacks cannot be triggered, and that no
@@ -520,6 +554,7 @@ static CDVWKInAppBrowser* instance = nil;
  */
 - (void)webView:(WKWebView *)theWebView decidePolicyForNavigationAction:(WKNavigationAction *)navigationAction decisionHandler:(void (^)(WKNavigationActionPolicy))decisionHandler {
     
+    NSURLRequest* request = navigationAction.request;
     NSURL* url = navigationAction.request.URL;
     NSURL* mainDocumentURL = navigationAction.request.mainDocumentURL;
     BOOL isTopLevelNavigation = [url isEqual:mainDocumentURL];
@@ -527,6 +562,10 @@ static CDVWKInAppBrowser* instance = nil;
     BOOL useBeforeLoad = NO;
     NSString* httpMethod = navigationAction.request.HTTPMethod;
     NSString* errorMessage = nil;
+    
+    NSDictionary* jsonContainer = [self convertRequestToDictionary:request];
+    NSString *requestAsJSON = [self convertObjectToJSON:jsonContainer];
+    
     
     if([_beforeload isEqualToString:@"post"]){
         //TODO handle POST requests by preserving POST data then remove this condition
@@ -544,7 +583,7 @@ static CDVWKInAppBrowser* instance = nil;
     // When beforeload, on first URL change, initiate JS callback. Only after the beforeload event, continue.
     if (_waitForBeforeload && useBeforeLoad) {
         CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK
-                                                      messageAsDictionary:@{@"type":@"beforeload", @"url":[url absoluteString]}];
+                                                      messageAsDictionary:@{@"type":@"beforeload", @"url":[url absoluteString], @"request": requestAsJSON}];
         [pluginResult setKeepCallback:[NSNumber numberWithBool:YES]];
         
         [self.commandDelegate sendPluginResult:pluginResult callbackId:self.callbackId];
@@ -660,6 +699,10 @@ static CDVWKInAppBrowser* instance = nil;
         [pluginResult setKeepCallback:[NSNumber numberWithBool:YES]];
         
         [self.commandDelegate sendPluginResult:pluginResult callbackId:self.callbackId];
+    }
+
+    if ([_beforeload isEqualToString:@"yes"]) {
+        _waitForBeforeload = YES;
     }
 }
 
@@ -1124,6 +1167,16 @@ BOOL isExiting = FALSE;
         [self.webView loadFileURL:url allowingReadAccessToURL:url];
     } else {
          NSMutableURLRequest* request = [CDVInAppBrowserOptions createRequest:url headers:headers];
+        [self.webView loadRequest:request];
+    }
+}
+
+- (void)loadRequest:(NSMutableURLRequest*)request
+{
+    NSURL* url = [request URL];
+    if ([url.scheme isEqualToString:@"file"]) {
+          [self.webView loadFileURL:url allowingReadAccessToURL:url];
+    } else {
         [self.webView loadRequest:request];
     }
 }
