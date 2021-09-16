@@ -1518,7 +1518,6 @@ public class InAppBrowser extends CordovaPlugin {
         JSONObject jsonRequest = new JSONObject();
         jsonRequest.put("url", url);
         jsonRequest.put("method", method);
-        //jsonRequest.put("HTTPBody", request.getAjaxData());
 
         JSONObject obj = new JSONObject();
         obj.put("type", BEFORELOAD);
