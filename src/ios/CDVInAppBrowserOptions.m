@@ -106,4 +106,38 @@
 	return request;
 }
 
++ (NSMutableURLRequest*)createPayloadRequestFromJSON:(NSString*)jsonRequestString headers:(NSString*)headers
+{
+    NSError* conversionError;
+    NSData* jsonRequestData = [jsonRequestString dataUsingEncoding:NSUTF8StringEncoding];
+    
+    NSDictionary* requestAsDictionary = [NSJSONSerialization JSONObjectWithData:jsonRequestData options:NSJSONReadingMutableContainers error:&conversionError];
+    
+    NSString* method = requestAsDictionary[@"HTTPMethod"];
+    NSURL* url = [[NSURL alloc] initWithString:requestAsDictionary[@"URL"]];
+    
+    NSMutableURLRequest* request = [NSMutableURLRequest requestWithURL:url];
+    [request setHTTPMethod:method];
+    
+    NSData* payload = [requestAsDictionary[@"HTTPBody"] dataUsingEncoding:NSUTF8StringEncoding];
+    
+    if (payload != nil && ![payload isEqual:@""]) {
+        [request setHTTPBody:payload];
+    }
+
+    if (headers != nil) {
+         NSArray* pairs = [headers componentsSeparatedByString:@","];
+         for (NSString* pair in pairs) {
+            NSArray* keyvalue = [pair componentsSeparatedByString:@"="];
+
+            if ([keyvalue count] == 2) {
+                NSString* key = [[[[keyvalue objectAtIndex:0] stringByReplacingOccurrencesOfString:@"@e" withString:@"="] stringByReplacingOccurrencesOfString:@"@c" withString:@","] stringByReplacingOccurrencesOfString:@"@a" withString:@"@"];
+                NSString* value = [[[[keyvalue objectAtIndex:1] stringByReplacingOccurrencesOfString:@"@e" withString:@"="] stringByReplacingOccurrencesOfString:@"@c" withString:@","] stringByReplacingOccurrencesOfString:@"@a" withString:@"@"];
+                [request setValue:value forHTTPHeaderField:key];
+            }
+        }
+    }
+    return request;
+}
+
 @end

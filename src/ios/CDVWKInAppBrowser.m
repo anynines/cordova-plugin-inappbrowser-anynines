@@ -33,6 +33,7 @@
 #define    kInAppBrowserToolbarBarPositionTop @"top"
 
 #define    IAB_BRIDGE_NAME @"cordova_iab"
+#define    IAB_CUSTOM_BRIDGE_NAME @"cordova_iab_custom"
 
 #define    TOOLBAR_HEIGHT 44.0
 #define    LOCATIONBAR_HEIGHT 21.0
@@ -48,6 +49,8 @@
 @implementation CDVWKInAppBrowser
 
 static CDVWKInAppBrowser* instance = nil;
+
+NSString* CUSTOM_HEADERS = @"";
 
 + (id) getInstance{
     return instance;
@@ -107,6 +110,8 @@ static CDVWKInAppBrowser* instance = nil;
     NSString* target = [command argumentAtIndex:1 withDefault:kInAppBrowserTargetSelf];
     NSString* options = [command argumentAtIndex:2 withDefault:@"" andClass:[NSString class]];
     NSString* headers = [command argumentAtIndex:3 withDefault:@"" andClass:[NSString class]];
+    
+    CUSTOM_HEADERS = headers;
     
     self.callbackId = command.callbackId;
     
@@ -408,14 +413,15 @@ static CDVWKInAppBrowser* instance = nil;
     [self.inAppBrowserViewController navigateTo:url  headers:headerStr];
 }
 
-// This is a helper method for the inject{Script|Style}{Code|File} API calls, which
-// provides a consistent method for injecting JavaScript code into the document.
-//
-// If a wrapper string is supplied, then the source string will be JSON-encoded (adding
-// quotes) and wrapped using string formatting. (The wrapper string should have a single
-// '%@' marker).
-//
-// If no wrapper is supplied, then the source string is executed directly.
+- (void)injectRequest:(CDVInvokedUrlCommand*)command
+{
+    NSString* JSONRequestString = [command argumentAtIndex:0];
+    NSString* headers = [command argumentAtIndex:1];
+
+    NSMutableURLRequest* request = [CDVInAppBrowserOptions createPayloadRequestFromJSON:JSONRequestString headers:headers];
+    _waitForBeforeload = NO;
+    [self.inAppBrowserViewController loadRequest:request];
+}
 
 - (void)injectDeferredObject:(NSString*)source withWrapper:(NSString*)jsWrapper
 {
@@ -513,6 +519,30 @@ static CDVWKInAppBrowser* instance = nil;
     return NO;
 }
 
+- (NSString*)convertObjectToJSON:(id)object
+{
+    NSError *writeError = nil;
+
+    NSData *jsonData = [NSJSONSerialization dataWithJSONObject:object options:NSJSONWritingPrettyPrinted error:&writeError];
+
+    NSString *jsonString = [[NSString alloc] initWithData:jsonData encoding:NSUTF8StringEncoding];
+
+    return jsonString;
+}
+
+- (NSDictionary*)convertRequestToDictionary:(NSURLRequest*)request
+{
+    NSString* url = [[request URL] absoluteString];
+
+    NSDictionary* container = @{
+        @"URL": url,
+        @"HTTPMethod": [request HTTPMethod],
+        @"HTTPBody": ([request HTTPBody] != nil ? [[NSString alloc] initWithData:[request HTTPBody] encoding:NSUTF8StringEncoding] : @"")
+    };
+
+  return container;
+}
+
 /**
  * The message handler bridge provided for the InAppBrowser is capable of executing any oustanding callback belonging
  * to the InAppBrowser plugin. Care has been taken that other callbacks cannot be triggered, and that no
@@ -520,6 +550,7 @@ static CDVWKInAppBrowser* instance = nil;
  */
 - (void)webView:(WKWebView *)theWebView decidePolicyForNavigationAction:(WKNavigationAction *)navigationAction decisionHandler:(void (^)(WKNavigationActionPolicy))decisionHandler {
     
+    NSURLRequest* request = navigationAction.request;
     NSURL* url = navigationAction.request.URL;
     NSURL* mainDocumentURL = navigationAction.request.mainDocumentURL;
     BOOL isTopLevelNavigation = [url isEqual:mainDocumentURL];
@@ -527,6 +558,10 @@ static CDVWKInAppBrowser* instance = nil;
     BOOL useBeforeLoad = NO;
     NSString* httpMethod = navigationAction.request.HTTPMethod;
     NSString* errorMessage = nil;
+    
+    NSDictionary* jsonContainer = [self convertRequestToDictionary:request];
+    NSString *requestAsJSON = [self convertObjectToJSON:jsonContainer];
+    
     
     if([_beforeload isEqualToString:@"post"]){
         //TODO handle POST requests by preserving POST data then remove this condition
@@ -544,7 +579,7 @@ static CDVWKInAppBrowser* instance = nil;
     // When beforeload, on first URL change, initiate JS callback. Only after the beforeload event, continue.
     if (_waitForBeforeload && useBeforeLoad) {
         CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK
-                                                      messageAsDictionary:@{@"type":@"beforeload", @"url":[url absoluteString]}];
+                                                      messageAsDictionary:@{@"type":@"beforeload", @"url":[url absoluteString], @"request": requestAsJSON}];
         [pluginResult setKeepCallback:[NSNumber numberWithBool:YES]];
         
         [self.commandDelegate sendPluginResult:pluginResult callbackId:self.callbackId];
@@ -631,6 +666,17 @@ static CDVWKInAppBrowser* instance = nil;
     }
 }
 
+#pragma mark WKScriptMessageHandler delegate
+- (void)userContentController:(nonnull WKUserContentController *)userContentController didReceiveCustomScriptMessage:(nonnull WKScriptMessage *)message {
+    
+    NSString* messageContent = (NSString*) message.body;
+    if ([messageContent  isEqual: @"requestHeaders"]) {
+        NSString* script = @"setHeaderInfo({ \"X-TEST\":1 })";
+        [self.webViewEngine evaluateJavaScript:script completionHandler:nil];
+    }
+    
+}
+
 /**
 * _waitBeforeLoad is set according to the _beforeload browser option.
 * This means the "beforeload" event will be triggered on each load start
@@ -660,6 +706,20 @@ static CDVWKInAppBrowser* instance = nil;
         [pluginResult setKeepCallback:[NSNumber numberWithBool:YES]];
         
         [self.commandDelegate sendPluginResult:pluginResult callbackId:self.callbackId];
+    }
+    
+    NSString* setHeaders = @"setSerializedHeaders('";
+    setHeaders = [setHeaders stringByAppendingString:CUSTOM_HEADERS];
+    setHeaders = [setHeaders stringByAppendingString:@"');"];
+    [theWebView evaluateJavaScript:setHeaders completionHandler:nil];
+    
+    NSString* setBridgeName = @"setCustomNativeBridgeName('";
+    setBridgeName = [setBridgeName stringByAppendingString:IAB_CUSTOM_BRIDGE_NAME];
+    setBridgeName = [setBridgeName stringByAppendingString:@"');"];
+    [theWebView evaluateJavaScript:setBridgeName completionHandler:nil];
+
+    if ([_beforeload isEqualToString:@"yes"]) {
+        _waitForBeforeload = YES;
     }
 }
 
@@ -692,6 +752,7 @@ static CDVWKInAppBrowser* instance = nil;
     }
     
     [self.inAppBrowserViewController.configuration.userContentController removeScriptMessageHandlerForName:IAB_BRIDGE_NAME];
+    [self.inAppBrowserViewController.configuration.userContentController removeScriptMessageHandlerForName:IAB_CUSTOM_BRIDGE_NAME];
     self.inAppBrowserViewController.configuration = nil;
     
     [self.inAppBrowserViewController.webView stopLoading];
@@ -749,6 +810,30 @@ BOOL isExiting = FALSE;
     //NSLog(@"dealloc");
 }
 
+- (NSString*)getInjectScript
+{
+    NSString* scriptPath = [[NSBundle mainBundle] pathForResource:@"webViewUserScript" ofType:@"js" inDirectory:@"public/assets/cordova-plugin-inappbrowser-anynines"];
+    
+    NSString* scriptContent = [[NSString alloc] initWithContentsOfFile:scriptPath encoding:NSUTF8StringEncoding error:nil];
+    
+    return scriptContent;
+    
+    //return @"console.log('INJECTING SCRIPT');function setCustomNativeBridge(name) { window.cordova_iab_customName = name }  function callNative(message) { window.webkit.messgaHandlers[cordova_iab_customName].postMessage(message) }  function setHeaderInfo(jsonHeaders) { try {   window.customHeaders = JSON.parse(jsonHeaders) } catch(error) {   window.customHeaders = { 'X-TOY-MOBILE': 1 }; } }  XMLHttpRequest.prototype.originalSend = XMLHttpRequest.prototype.send; XMLHttpRequest.prototype.send = function send(body) { try {   callNative('requestHeaders');   let headers = window.customHeaders || { 'X-TOY-MOBILE': 1 };   for (let name in headers) {     this.setRequestHeader(name, headers[name]);     alert(name + ': ' + headers[name]);   }   this.originalSend(body); } catch(error) {   alert('headers could not be set: ' + Error.toString()); } };  function SessionRefresher(timeInterval) { this.timer = null; this.timeInterval = timeInterval || 600000; return this; }  SessionRefresher.prototype.refresh = function refresh() { let xhr = new XMLHttpRequest; xhr.open('GET', window.location.origin); xhr.onreadystatechange = function() {   if (xhr.status === 200) {     alert('refresh successful');     xhr.onreadystatechange = null;     xhr = null;   } } xhr.send(); }  SessionRefresher.prototype.start = function start() { if (window.location.protocol.startsWith('http')) {   this.refresh();   this.timer = setInterval(this.refresh, this.timeInterval);   return true; } }  SessionRefresher.prototype.stop = function stop() { clearInterval(this.timer); return true; }   const refresher = new SessionRefresher; refresher.start()";
+}
+
+- (void) setGlobalsToJS:(WKWebView*) webView
+{
+    NSString* setHeaders = @"setSerializedHeaders('";
+    setHeaders = [setHeaders stringByAppendingString:CUSTOM_HEADERS];
+    setHeaders = [setHeaders stringByAppendingString:@"');"];
+    [webView evaluateJavaScript:setHeaders completionHandler:nil];
+    
+    NSString* setBridgeName = @"setCustomNativeBridgeName('";
+    setBridgeName = [setBridgeName stringByAppendingString:IAB_CUSTOM_BRIDGE_NAME];
+    setBridgeName = [setBridgeName stringByAppendingString:@"');"];
+    [webView evaluateJavaScript:setBridgeName completionHandler:nil];
+}
+
 - (void)createViews
 {
     // We create the views in code for primarily for ease of upgrades and not requiring an external .xib to be included
@@ -773,6 +858,13 @@ BOOL isExiting = FALSE;
     configuration.processPool = [[CDVWKProcessPoolFactory sharedFactory] sharedProcessPool];
 #endif
     [configuration.userContentController addScriptMessageHandler:self name:IAB_BRIDGE_NAME];
+    [configuration.userContentController addScriptMessageHandler:self name:IAB_CUSTOM_BRIDGE_NAME];
+    
+    NSString* scriptString = @"function respond(arg) { console.log(\"You're a \" + arg); } \n function callNative(arg) { webkit.messageHandlers.cordova_iab_custom.postMessage(\"You're a \" + arg); }";
+    WKUserScript* script = [[WKUserScript alloc] initWithSource:[self getInjectScript] injectionTime:1 forMainFrameOnly:NO];
+    [configuration.userContentController addUserScript:script];
+    
+    [self setGlobalsToJS:self.webView];
     
     //WKWebView options
     configuration.allowsInlineMediaPlayback = _browserOptions.allowinlinemediaplayback;
@@ -1128,6 +1220,16 @@ BOOL isExiting = FALSE;
     }
 }
 
+- (void)loadRequest:(NSMutableURLRequest*)request
+{
+    NSURL* url = [request URL];
+    if ([url.scheme isEqualToString:@"file"]) {
+          [self.webView loadFileURL:url allowingReadAccessToURL:url];
+    } else {
+        [self.webView loadRequest:request];
+    }
+}
+
 - (void)goBack
 {
     [self.webView goBack];
@@ -1259,11 +1361,16 @@ BOOL isExiting = FALSE;
 
 #pragma mark WKScriptMessageHandler delegate
 - (void)userContentController:(nonnull WKUserContentController *)userContentController didReceiveScriptMessage:(nonnull WKScriptMessage *)message {
-    if (![message.name isEqualToString:IAB_BRIDGE_NAME]) {
+    if ([message.name isEqualToString:IAB_BRIDGE_NAME]) {
+        //NSLog(@"Received script message %@", message.body);
+        [self.navigationDelegate userContentController:userContentController didReceiveScriptMessage:message];
+    } else if ([message.name isEqualToString:@"cordova_iab_custom"]) {
+        //NSLog(@"Received script message %@", message.body);
+        [self.navigationDelegate userContentController:userContentController didReceiveCustomScriptMessage:message];
+    } else {
         return;
     }
-    //NSLog(@"Received script message %@", message.body);
-    [self.navigationDelegate userContentController:userContentController didReceiveScriptMessage:message];
+    
 }
 
 #pragma mark CDVScreenOrientationDelegate
