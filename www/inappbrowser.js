@@ -96,6 +96,9 @@
       strUrl = urlutil.makeAbsolute(strUrl);
       exec(null, null, 'InAppBrowser', 'loadAfterBeforeload', [strUrl, parseRequestHeaders(headers)]);
     },
+    injectRequest: function (jsonRequestData, headers) {
+      exec(null, null, 'InAppBrowser', 'loadAfterBeforeload', [jsonRequestData, parseRequestHeaders(headers)]);
+    },
     close: function (eventname) {
       exec(null, null, 'InAppBrowser', 'close', []);
     },

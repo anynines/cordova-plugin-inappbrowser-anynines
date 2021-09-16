@@ -50,6 +50,7 @@
 - (void)show:(CDVInvokedUrlCommand*)command;
 - (void)hide:(CDVInvokedUrlCommand*)command;
 - (void)loadAfterBeforeload:(CDVInvokedUrlCommand*)command;
+- (void)injectRequest:(CDVInvokedUrlCommand*)command;
 
 @end
 
@@ -75,6 +76,7 @@
 
 - (void)close;
 - (void)navigateTo:(NSURL*)url headers:(NSString *)headers;
+- (void)loadRequest:(NSURLRequest*)request;
 - (void)goBack;
 - (BOOL)canGoBack;
 - (void)showLocationBar:(BOOL)show;
