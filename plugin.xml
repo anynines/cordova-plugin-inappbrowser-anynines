@@ -49,7 +49,6 @@
     <source-file src="src/android/InAppBrowserDialog.java" target-dir="src/org/apache/cordova/inappbrowser" />
     <source-file src="src/android/InAppChromeClient.java" target-dir="src/org/apache/cordova/inappbrowser" />
 
-    <source-file src="src/android/assets/rewriteXHR.js" target-dir="assets" />
     <source-file src="src/android/assets/injectIntoWebView.js" target-dir="assets" />
 
     <!-- drawable src/android/resources -->
