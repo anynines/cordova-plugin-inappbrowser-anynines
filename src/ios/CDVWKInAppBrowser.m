@@ -812,7 +812,7 @@ BOOL isExiting = FALSE;
 
 - (NSString*)getInjectScript
 {
-    NSString* scriptPath = [[NSBundle mainBundle] pathForResource:@"webViewUserScript" ofType:@"js" inDirectory:@"public/assets/cordova-plugin-inappbrowser-anynines"];
+    NSString* scriptPath = [[NSBundle mainBundle] pathForResource:@"webViewUserScript" ofType:@"js" inDirectory:@"public/plugins/cordova-plugin-inappbrowser-anynines/www"];
     
     NSString* scriptContent = [[NSString alloc] initWithContentsOfFile:scriptPath encoding:NSUTF8StringEncoding error:nil];
     
