@@ -817,8 +817,6 @@ BOOL isExiting = FALSE;
     NSString* scriptContent = [[NSString alloc] initWithContentsOfFile:scriptPath encoding:NSUTF8StringEncoding error:nil];
     
     return scriptContent;
-    
-    //return @"console.log('INJECTING SCRIPT');function setCustomNativeBridge(name) { window.cordova_iab_customName = name }  function callNative(message) { window.webkit.messgaHandlers[cordova_iab_customName].postMessage(message) }  function setHeaderInfo(jsonHeaders) { try {   window.customHeaders = JSON.parse(jsonHeaders) } catch(error) {   window.customHeaders = { 'X-TOY-MOBILE': 1 }; } }  XMLHttpRequest.prototype.originalSend = XMLHttpRequest.prototype.send; XMLHttpRequest.prototype.send = function send(body) { try {   callNative('requestHeaders');   let headers = window.customHeaders || { 'X-TOY-MOBILE': 1 };   for (let name in headers) {     this.setRequestHeader(name, headers[name]);     alert(name + ': ' + headers[name]);   }   this.originalSend(body); } catch(error) {   alert('headers could not be set: ' + Error.toString()); } };  function SessionRefresher(timeInterval) { this.timer = null; this.timeInterval = timeInterval || 600000; return this; }  SessionRefresher.prototype.refresh = function refresh() { let xhr = new XMLHttpRequest; xhr.open('GET', window.location.origin); xhr.onreadystatechange = function() {   if (xhr.status === 200) {     alert('refresh successful');     xhr.onreadystatechange = null;     xhr = null;   } } xhr.send(); }  SessionRefresher.prototype.start = function start() { if (window.location.protocol.startsWith('http')) {   this.refresh();   this.timer = setInterval(this.refresh, this.timeInterval);   return true; } }  SessionRefresher.prototype.stop = function stop() { clearInterval(this.timer); return true; }   const refresher = new SessionRefresher; refresher.start()";
 }
 
 - (void) setGlobalsToJS:(WKWebView*) webView
@@ -860,7 +858,6 @@ BOOL isExiting = FALSE;
     [configuration.userContentController addScriptMessageHandler:self name:IAB_BRIDGE_NAME];
     [configuration.userContentController addScriptMessageHandler:self name:IAB_CUSTOM_BRIDGE_NAME];
     
-    NSString* scriptString = @"function respond(arg) { console.log(\"You're a \" + arg); } \n function callNative(arg) { webkit.messageHandlers.cordova_iab_custom.postMessage(\"You're a \" + arg); }";
     WKUserScript* script = [[WKUserScript alloc] initWithSource:[self getInjectScript] injectionTime:1 forMainFrameOnly:NO];
     [configuration.userContentController addUserScript:script];
     
