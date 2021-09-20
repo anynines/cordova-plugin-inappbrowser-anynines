@@ -413,6 +413,8 @@ NSString* CUSTOM_HEADERS = @"";
     [self.inAppBrowserViewController navigateTo:url  headers:headerStr];
 }
 
+#pragma mark injectRequest
+
 - (void)injectRequest:(CDVInvokedUrlCommand*)command
 {
     NSString* JSONRequestString = [command argumentAtIndex:0];
@@ -690,6 +692,29 @@ NSString* CUSTOM_HEADERS = @"";
     }
 }
 
+#pragma mark getInjectScript
+- (NSString*)getInjectScript
+{
+    NSString* scriptPath = [[NSBundle mainBundle] pathForResource:@"webViewUserScript" ofType:@"js" inDirectory:@"public/plugins/cordova-plugin-inappbrowser-anynines/www"];
+    
+    NSString* scriptContent = [[NSString alloc] initWithContentsOfFile:scriptPath encoding:NSUTF8StringEncoding error:nil];
+    
+    return scriptContent;
+}
+
+- (void) setGlobalsToJS:(WKWebView*) webView
+{
+    NSString* setHeaders = @"setSerializedHeaders('";
+    setHeaders = [setHeaders stringByAppendingString:CUSTOM_HEADERS];
+    setHeaders = [setHeaders stringByAppendingString:@"');"];
+    [webView evaluateJavaScript:setHeaders completionHandler:nil];
+    
+    NSString* setBridgeName = @"setCustomNativeBridgeName('";
+    setBridgeName = [setBridgeName stringByAppendingString:IAB_CUSTOM_BRIDGE_NAME];
+    setBridgeName = [setBridgeName stringByAppendingString:@"');"];
+    [webView evaluateJavaScript:setBridgeName completionHandler:nil];
+}
+
 - (void)didFinishNavigation:(WKWebView*)theWebView
 {
     if (self.callbackId != nil) {
@@ -708,15 +733,8 @@ NSString* CUSTOM_HEADERS = @"";
         [self.commandDelegate sendPluginResult:pluginResult callbackId:self.callbackId];
     }
     
-    NSString* setHeaders = @"setSerializedHeaders('";
-    setHeaders = [setHeaders stringByAppendingString:CUSTOM_HEADERS];
-    setHeaders = [setHeaders stringByAppendingString:@"');"];
-    [theWebView evaluateJavaScript:setHeaders completionHandler:nil];
-    
-    NSString* setBridgeName = @"setCustomNativeBridgeName('";
-    setBridgeName = [setBridgeName stringByAppendingString:IAB_CUSTOM_BRIDGE_NAME];
-    setBridgeName = [setBridgeName stringByAppendingString:@"');"];
-    [theWebView evaluateJavaScript:setBridgeName completionHandler:nil];
+    [theWebView evaluateJavaScript:[self getInjectScript] completionHandler:nil];
+    [self setGlobalsToJS:theWebView];
 
     if ([_beforeload isEqualToString:@"yes"]) {
         _waitForBeforeload = YES;
@@ -810,28 +828,6 @@ BOOL isExiting = FALSE;
     //NSLog(@"dealloc");
 }
 
-- (NSString*)getInjectScript
-{
-    NSString* scriptPath = [[NSBundle mainBundle] pathForResource:@"webViewUserScript" ofType:@"js" inDirectory:@"public/plugins/cordova-plugin-inappbrowser-anynines/www"];
-    
-    NSString* scriptContent = [[NSString alloc] initWithContentsOfFile:scriptPath encoding:NSUTF8StringEncoding error:nil];
-    
-    return scriptContent;
-}
-
-- (void) setGlobalsToJS:(WKWebView*) webView
-{
-    NSString* setHeaders = @"setSerializedHeaders('";
-    setHeaders = [setHeaders stringByAppendingString:CUSTOM_HEADERS];
-    setHeaders = [setHeaders stringByAppendingString:@"');"];
-    [webView evaluateJavaScript:setHeaders completionHandler:nil];
-    
-    NSString* setBridgeName = @"setCustomNativeBridgeName('";
-    setBridgeName = [setBridgeName stringByAppendingString:IAB_CUSTOM_BRIDGE_NAME];
-    setBridgeName = [setBridgeName stringByAppendingString:@"');"];
-    [webView evaluateJavaScript:setBridgeName completionHandler:nil];
-}
-
 - (void)createViews
 {
     // We create the views in code for primarily for ease of upgrades and not requiring an external .xib to be included
@@ -857,11 +853,6 @@ BOOL isExiting = FALSE;
 #endif
     [configuration.userContentController addScriptMessageHandler:self name:IAB_BRIDGE_NAME];
     [configuration.userContentController addScriptMessageHandler:self name:IAB_CUSTOM_BRIDGE_NAME];
-    
-    WKUserScript* script = [[WKUserScript alloc] initWithSource:[self getInjectScript] injectionTime:1 forMainFrameOnly:NO];
-    [configuration.userContentController addUserScript:script];
-    
-    [self setGlobalsToJS:self.webView];
     
     //WKWebView options
     configuration.allowsInlineMediaPlayback = _browserOptions.allowinlinemediaplayback;
