@@ -97,7 +97,7 @@
       exec(null, null, 'InAppBrowser', 'loadAfterBeforeload', [strUrl, parseRequestHeaders(headers)]);
     },
     injectRequest: function (jsonRequestData, headers) {
-      exec(null, null, 'InAppBrowser', 'injectScript', [jsonRequestData, parseRequestHeaders(headers)]);
+      exec(null, null, 'InAppBrowser', 'injectRequest', [jsonRequestData, parseRequestHeaders(headers)]);
     },
     close: function (eventname) {
       exec(null, null, 'InAppBrowser', 'close', []);
