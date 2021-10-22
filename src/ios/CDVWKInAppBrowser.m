@@ -1204,6 +1204,7 @@ BOOL isExiting = FALSE;
         [self.webView loadFileURL:url allowingReadAccessToURL:url];
     } else {
          NSMutableURLRequest* request = [CDVInAppBrowserOptions createRequest:url headers:headers];
+         request.timeoutInterval = 180;
         [self.webView loadRequest:request];
     }
 }
